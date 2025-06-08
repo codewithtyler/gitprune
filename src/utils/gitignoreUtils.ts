@@ -177,7 +177,26 @@ export function mergeGitIgnoreFiles(template: string, projectGitignore: string):
   
   for (const [sectionEnd, entries] of sortedInsertions) {
     const insertIndex = parseInt(sectionEnd) + 1;
-    mergedLines.splice(insertIndex, 0, ...entries);
+    
+    // Check if we need to add spacing
+    const needsSpacingBefore = insertIndex < mergedLines.length && 
+                               mergedLines[insertIndex - 1].trim() !== '';
+    const needsSpacingAfter = insertIndex < mergedLines.length && 
+                              mergedLines[insertIndex].trim() !== '' &&
+                              mergedLines[insertIndex].trim().startsWith('#');
+    
+    // Build the insertion array with proper spacing
+    const toInsert: string[] = [];
+    
+    // Add entries without leading blank line
+    toInsert.push(...entries);
+    
+    // Add trailing blank line if the next line is a heading
+    if (needsSpacingAfter) {
+      toInsert.push('');
+    }
+    
+    mergedLines.splice(insertIndex, 0, ...toInsert);
   }
   
   // Add fallback entries at the end if any
