@@ -192,4 +192,3 @@ export function mergeGitIgnoreFiles(template: string, projectGitignore: string):
     newEntries: newEntries
   };
 }
-</parameter>
