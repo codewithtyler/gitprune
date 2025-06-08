@@ -178,25 +178,34 @@ export function mergeGitIgnoreFiles(template: string, projectGitignore: string):
   for (const [sectionEnd, entries] of sortedInsertions) {
     const insertIndex = parseInt(sectionEnd) + 1;
     
-    // Check if we need to add spacing
-    const needsSpacingBefore = insertIndex < mergedLines.length && 
-                               mergedLines[insertIndex - 1].trim() !== '';
-    const needsSpacingAfter = insertIndex < mergedLines.length && 
-                              mergedLines[insertIndex].trim() !== '' &&
-                              mergedLines[insertIndex].trim().startsWith('#');
+    // Find the actual last non-empty line in this section
+    let actualInsertIndex = parseInt(sectionEnd);
+    while (actualInsertIndex >= 0 && mergedLines[actualInsertIndex].trim() === '') {
+      actualInsertIndex--;
+    }
+    actualInsertIndex++; // Insert after the last non-empty line
     
-    // Build the insertion array with proper spacing
-    const toInsert: string[] = [];
-    
-    // Add entries without leading blank line
-    toInsert.push(...entries);
-    
-    // Add trailing blank line if the next line is a heading
-    if (needsSpacingAfter) {
-      toInsert.push('');
+    // Check if the next non-empty line after our insertion point is a heading
+    let nextLineIndex = actualInsertIndex;
+    while (nextLineIndex < mergedLines.length && mergedLines[nextLineIndex].trim() === '') {
+      nextLineIndex++;
     }
     
-    mergedLines.splice(insertIndex, 0, ...toInsert);
+    const nextLineIsHeading = nextLineIndex < mergedLines.length && 
+                              mergedLines[nextLineIndex].trim().startsWith('#');
+    
+    // Insert entries directly after the last item in the section
+    mergedLines.splice(actualInsertIndex, 0, ...entries);
+    
+    // If the next line is a heading, ensure there's a blank line separator
+    if (nextLineIsHeading) {
+      // Check if there's already a blank line
+      const lineAfterEntries = actualInsertIndex + entries.length;
+      if (lineAfterEntries < mergedLines.length && 
+          mergedLines[lineAfterEntries].trim() !== '') {
+        mergedLines.splice(lineAfterEntries, 0, '');
+      }
+    }
   }
   
   // Add fallback entries at the end if any
