@@ -1,31 +1,29 @@
 /**
  * Enhanced utility functions for processing and merging .gitignore files
- * - Improved duplicate detection with normalization for different formats
+ * - Enhanced duplicate detection ignoring punctuation and formatting differences
  * - Smart categorization under existing headings instead of separate section
  */
 
 /**
  * Normalizes a gitignore entry for comparison by:
  * - Trimming whitespace
- * - Removing trailing slashes
- * - Removing wildcard patterns for base comparison
+ * - Removing all punctuation (., *, /, etc.)
+ * - Converting to lowercase for case-insensitive comparison
  */
 function normalizeEntryForComparison(entry: string): string {
   let normalized = entry.trim();
   
-  // Remove trailing slash for directory entries
-  if (normalized.endsWith('/')) {
-    normalized = normalized.slice(0, -1);
-  }
+  // Remove all punctuation and special characters for comparison
+  // This catches cases like:
+  // - "node_modules/" vs "node_modules"
+  // - "pnpm-debug.log*" vs "pnpm-debug.log"
+  // - ".env.local" vs "env.local"
+  normalized = normalized.replace(/[^\w\s-]/g, '');
   
-  // Remove common wildcard patterns for comparison
-  // e.g., "pnpm-debug.log*" becomes "pnpm-debug.log"
-  normalized = normalized.replace(/\*+$/, '');
+  // Remove extra spaces and convert to lowercase
+  normalized = normalized.replace(/\s+/g, '').toLowerCase();
   
-  // Remove leading wildcards and slashes for comparison
-  normalized = normalized.replace(/^[*\/]+/, '');
-  
-  return normalized.toLowerCase();
+  return normalized;
 }
 
 /**
